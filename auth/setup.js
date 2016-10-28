@@ -31,14 +31,14 @@ exports.setup = function () {
 
 function findAndComparePassword(username, password, done){
   // look up the user by their username
-  User.findOne({ username: username}).then(function(user){
+  User.findByUsername(username).then(function(user){
     if(!user) {
       // did not find a user, not a successful login
       return done(null, false);
     }
 
     // compare the password
-    user.comparePassword(password).then(function(isMatch){
+    User.comparePassword(user, password).then(function(isMatch){
       // indicate whether or not it matched
       if (isMatch) {
         done(null, user);

@@ -13,15 +13,15 @@ function findByUsername(username) {
       }
 
       client.query('SELECT * FROM users WHERE username=$1',
-                   [username],
-                   function(err, result){
-                     done();
-                     if (err) {
-                       reject(err);
-                     }
+      [username],
+      function(err, result){
+        done();
+        if (err) {
+          reject(err);
+        }
 
-                     resolve(result.rows[0]);
-                   });
+        resolve(result.rows[0]);
+      });
     });
   });
 }
@@ -38,15 +38,15 @@ function findById(id) {
       }
 
       client.query('SELECT * FROM users WHERE id=$1',
-                   [id],
-                   function(err, result){
-                     done();
-                     if (err) {
-                       reject(err);
-                     }
+      [id],
+      function(err, result){
+        done();
+        if (err) {
+          reject(err);
+        }
 
-                     resolve(result.rows[0]);
-                   });
+        resolve(result.rows[0]);
+      });
     });
   });
 }
@@ -54,65 +54,50 @@ function findById(id) {
 // create
 function create(username, password) {
   return new Promise(function(resolve, reject){
-    pool.connect(function(err, client, done){
+    bcrypt.hash(password, SALT_ROUNDS, function(err, hash){
       if (err) {
-        done();
+        console.log('Error hashing password', err);
         return reject(err);
       }
 
-      client.query('INSERT INTO users (username, password) VALUES ($1, $2) RETURNING *',
-                   [username, password],
-                   function(err, result){
-                     done();
-                     if (err) {
-                       reject(err);
-                     }
+      pool.connect(function(err, client, done){
+        if (err) {
+          done();
+          return reject(err);
+        }
 
-                     resolve(result.rows[0]);
-                   });
+        client.query('INSERT INTO users (username, password) VALUES ($1, $2) RETURNING *',
+                     [username, hash],
+                     function(err, result){
+                       done();
+                       if (err) {
+                         return reject(err);
+                       }
+
+                       resolve(result.rows[0]);
+                     });
+      });
     });
   });
 }
 
 // compare password
+function comparePassword(user, passwordToCompare) {
+  return new Promise(function(resolve){
+    bcrypt.compare(passwordToCompare, user.password, function(err, match){
+      if (err) {
+        console.log('Error comparing password', err);
+        return resolve(false);
+      }
 
+      resolve(match);
+    });
+  });
+}
 
 module.exports = {
   findByUsername: findByUsername,
   findById: findById,
-  create: create
+  create: create,
+  comparePassword: comparePassword
 };
-// // make sure that everytime we save a user, the password gets hashed
-// userSchema.pre('save', function(done){
-//   const user = this;
-//
-//   bcrypt.hash(user.password, SALT_ROUNDS, function(err, hash){
-//     if (err) {
-//       console.log('Error hashing password', err);
-//       return done(new Error('Error hashing password'));
-//     }
-//
-//     user.password = hash;
-//     done();
-//   });
-// });
-//
-//
-// userSchema.methods.comparePassword = function(password) {
-//   const user = this;
-//
-//   return new Promise(function(resolve){
-//     bcrypt.compare(password, user.password, function(err, match){
-//       if (err) {
-//         console.log('Error comparing password', err);
-//         return resolve(false);
-//       }
-//
-//       resolve(match);
-//     });
-//   });
-// };
-//
-// const User = mongoose.model('User', userSchema);
-//
-// module.exports = User;

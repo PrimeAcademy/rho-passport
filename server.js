@@ -1,35 +1,14 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const connection = require('./db/connection');
 const path = require('path');
 const login = require('./routes/login');
 const register = require('./routes/register');
-// const auth = require('./auth/setup');
+const auth = require('./auth/setup');
 const passport = require('passport');
 const session = require('express-session');
 
-const user = require('./models/user');
 
-user.findByUsername('ryan').then(function(user){
-  console.log('Got a user from the db', user);
-});
-
-user.findById(1).then(function(user){
-  console.log('Got a user from the db', user);
-});
-
-user.create('antoinette', '5678').then(function(user){
-  console.log('Created a new user', user);
-});
-
-
-
-
-
-
-
-
-
+auth.setup();
 
 const sessionConfig = {
   secret: 'super secret key goes here', // TODO this should be read from ENV
